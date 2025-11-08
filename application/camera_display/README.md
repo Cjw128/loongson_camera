@@ -64,9 +64,21 @@ scp /home/cjw/ls2k0300_camera_project/output/camera_display_ips200 root@192.168.
 
 SSH登录到板卡后执行：
 
+**推荐：仅网络传输（性能最佳）**
 ```bash
-# 设置OpenCV库路径并运行
+# 禁用屏幕显示，节省30%CPU资源，获得最高帧率
 LD_LIBRARY_PATH=/home/root/opencv/lib ./camera_display_ips200
+```
+
+**可选：同时启用屏幕显示**
+```bash
+# 同时显示到IPS200屏幕和网络传输
+LD_LIBRARY_PATH=/home/root/opencv/lib ./camera_display_ips200 --enable-display
+```
+
+**查看帮助信息**
+```bash
+./camera_display_ips200 --help
 ```
 
 ### 5. 预期输出
