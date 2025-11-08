@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -105,8 +106,14 @@ static void accept_clients() {
             break;
         }
 
-        // 设置为非阻塞
-        set_nonblocking(new_fd);
+        // ⚠️ 关键修复：客户端socket设置为阻塞模式
+        // 非阻塞模式会导致send()返回EAGAIN，造成连接断开
+        // 阻塞模式确保数据完整发送
+        // （服务器socket仍然是非阻塞的，只影响accept）
+
+        // 设置TCP_NODELAY，禁用Nagle算法，减少延迟
+        int flag = 1;
+        setsockopt(new_fd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
 
         // 添加到客户端列表
         for (int i = 0; i < MAX_CLIENTS; i++) {

@@ -47,12 +47,21 @@ class CameraViewer:
     def recv_exact(self, size):
         """接收指定大小的数据"""
         data = b''
-        while len(data) < size:
-            packet = self.socket.recv(size - len(data))
-            if not packet:
-                return None
-            data += packet
-        return data
+        try:
+            while len(data) < size:
+                remaining = size - len(data)
+                packet = self.socket.recv(remaining)
+                if not packet:
+                    print(f"\n[错误] Socket连接断开，已接收 {len(data)}/{size} 字节")
+                    return None
+                data += packet
+            return data
+        except socket.timeout:
+            print(f"\n[错误] Socket超时，已接收 {len(data)}/{size} 字节")
+            return None
+        except Exception as e:
+            print(f"\n[错误] 接收数据异常: {e}，已接收 {len(data)}/{size} 字节")
+            return None
 
     def receive_frame(self, verbose=True):
         """接收一帧图像"""
@@ -167,13 +176,20 @@ class CameraViewer:
                 if frame_num <= 3:
                     print(" ✓")
 
+                # 第3帧后提示切换到简化模式
+                if frame_num == 3:
+                    print(f"\n{'='*60}")
+                    print("✓ 前3帧调试信息显示完成")
+                    print("✓ 窗口显示正常，切换到简化模式...")
+                    print("✓ 现在持续接收并显示图像")
+                    print("  （每30帧显示一次帧率统计）")
+                    print(f"{'='*60}\n")
+
                 # 显示帧率
                 if self.frame_count % 30 == 0:
                     elapsed = time.time() - self.start_time
                     fps = self.frame_count / elapsed
                     print(f"\n📊 帧率统计: {fps:.1f} FPS, 总帧数: {self.frame_count}")
-                    if frame_num <= 3:
-                        print()
 
                 # 处理按键
                 key = cv2.waitKey(1) & 0xFF
